@@ -1,0 +1,755 @@
+:root {
+  --bg-page: #F5F6F8;
+  --bg-surface: #FFFFFF;
+  --bg-subtle: #F8F9FB;
+  --border-color: #E0E4E8;
+  --text-primary: #333333;
+  --text-secondary: #595959;
+  --text-muted: #6E7681;
+
+  --brand-primary: #6A2376;
+  --brand-primary-hover: #52195C;
+  --brand-soft: #F5ECF7;
+  --brand-soft-text: #52195C;
+
+  --brand-blue: #1B75BC;
+  --brand-blue-hover: #145A94;
+  --brand-blue-soft: #EBF4FB;
+
+  --highlight-bg: #fef9c3;
+  --highlight-border: #eab308;
+  --highlight-badge: #854d0e;
+
+  --shadow-sm: 0 1px 2px rgba(51, 51, 51, 0.06);
+  --shadow-md: 0 4px 12px rgba(51, 51, 51, 0.08);
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* Colores oficiales de tapa de tubo */
+  --tapa-lila: #8b5cf6;
+  --tapa-celeste: #38bdf8;
+  --tapa-amarillo: #eab308;
+  --tapa-rojo: #ef4444;
+  --tapa-verde: #22c55e;
+  --tapa-gris: #64748b;
+  --tapa-orina: #f59e0b;
+  --tapa-otro: #94a3b8;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-width: 980px;
+  margin: 0 auto;
+  background-color: var(--bg-surface);
+  box-shadow: var(--shadow-md);
+}
+
+/* Header */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  background-color: var(--bg-surface);
+  border-top: 4px solid var(--brand-blue);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-blue));
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.header-subtitle {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.status-loading {
+  background-color: #e2e8f0;
+  color: #475569;
+}
+
+.status-ready {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.btn-ghost {
+  background-color: var(--brand-primary);
+  border: 1.5px solid var(--brand-blue);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-ghost:hover {
+  background-color: var(--brand-primary-hover);
+  border-color: var(--brand-blue-hover);
+  color: #ffffff;
+}
+
+.btn-link {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Chat area */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background-color: var(--bg-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.message-row {
+  display: flex;
+  flex-direction: column;
+  max-width: 88%;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.message-row.user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.message-row.bot {
+  align-self: flex-start;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 780px;
+}
+
+.bubble {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.93rem;
+  line-height: 1.5;
+  box-shadow: var(--shadow-sm);
+}
+
+.message-row.user .bubble {
+  background-color: var(--brand-primary);
+  color: #ffffff;
+  border-bottom-right-radius: 4px;
+}
+
+.message-row.bot .bubble {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-bottom-left-radius: 4px;
+}
+
+/* Tarjeta clínica de protocolo */
+.exam-card {
+  width: 100%;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-left: 6px solid var(--tapa-otro);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.exam-card[data-tapa="lila"] { border-left-color: var(--tapa-lila); }
+.exam-card[data-tapa="celeste"] { border-left-color: var(--tapa-celeste); }
+.exam-card[data-tapa="amarillo"] { border-left-color: var(--tapa-amarillo); }
+.exam-card[data-tapa="rojo"] { border-left-color: var(--tapa-rojo); }
+.exam-card[data-tapa="verde"] { border-left-color: var(--tapa-verde); }
+.exam-card[data-tapa="gris"] { border-left-color: var(--tapa-gris); }
+.exam-card[data-tapa="orina"] { border-left-color: var(--tapa-orina); }
+.exam-card[data-tapa="otro"] { border-left-color: var(--tapa-otro); }
+
+.exam-card-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  background-color: #ffffff;
+}
+
+.exam-title-group {
+  flex: 1;
+  min-width: 220px;
+}
+
+.exam-area-code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.code-pill {
+  background-color: var(--brand-blue-soft);
+  color: var(--brand-blue);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.exam-title {
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.exam-synonyms {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Badge visual de color de tapa */
+.tube-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.tube-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.tube-dot[data-tapa="lila"] { background-color: var(--tapa-lila); }
+.tube-dot[data-tapa="celeste"] { background-color: var(--tapa-celeste); }
+.tube-dot[data-tapa="amarillo"] { background-color: var(--tapa-amarillo); }
+.tube-dot[data-tapa="rojo"] { background-color: var(--tapa-rojo); }
+.tube-dot[data-tapa="verde"] { background-color: var(--tapa-verde); }
+.tube-dot[data-tapa="gris"] { background-color: var(--tapa-gris); }
+.tube-dot[data-tapa="orina"] { background-color: var(--tapa-orina); }
+.tube-dot[data-tapa="otro"] { background-color: var(--tapa-otro); }
+
+/* Cuerpo de la tarjeta */
+.exam-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px 18px;
+}
+
+.exam-field {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background-color: var(--bg-subtle);
+  border: 1px solid transparent;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.exam-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.exam-field.field-highlight {
+  background-color: var(--highlight-bg);
+  border-color: var(--highlight-border);
+  box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.2);
+}
+
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.field-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+.field-highlight .field-label {
+  color: var(--highlight-badge);
+}
+
+.intent-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  background-color: #fef08a;
+  color: var(--highlight-badge);
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid #facc15;
+}
+
+.field-value {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+  white-space: pre-line;
+}
+
+.table-wrapper {
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+  margin-bottom: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.table-title {
+  padding: 7px 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  background-color: #eef2f6;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.clinical-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.clinical-table th,
+.clinical-table td {
+  padding: 7px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+}
+
+.clinical-table th:last-child,
+.clinical-table td:last-child {
+  border-right: none;
+}
+
+.clinical-table tr:last-child td {
+  border-bottom: none;
+}
+
+.clinical-table thead th {
+  background-color: var(--brand-blue-soft);
+  color: var(--brand-blue);
+  font-weight: 700;
+}
+
+.clinical-table tbody tr:nth-child(even) {
+  background-color: #fafbfc;
+}
+
+/* Acciones de la tarjeta */
+.clinical-accordion {
+  margin: 0 18px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--bg-subtle);
+}
+
+.clinical-accordion summary {
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.clinical-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.clinical-accordion summary::after {
+  content: "+";
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+
+.clinical-accordion[open] summary::after {
+  content: "−";
+}
+
+.clinical-accordion[open] summary {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.clinical-accordion-body {
+  padding: 12px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  white-space: pre-line;
+}
+
+.updated-pill {
+  background-color: #ecfeff;
+  color: #155e75;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.exam-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 18px;
+  background-color: #f8fafc;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.btn-pdf {
+  background-color: var(--brand-blue-soft);
+  color: var(--brand-blue);
+  border-color: #bfdcf3;
+}
+
+.btn-pdf:hover {
+  background-color: #dcecf9;
+  border-color: var(--brand-blue);
+}
+
+.btn-pdf.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.btn-copy {
+  background-color: var(--brand-soft);
+  color: var(--brand-primary);
+  border-color: #dfc3e6;
+}
+
+.btn-copy:hover {
+  background-color: #ecd9f1;
+}
+
+.btn-copy.copied {
+  background-color: #dcfce7;
+  color: #166534;
+  border-color: #86efac;
+}
+
+.btn-toggle-full {
+  background-color: #ffffff;
+  color: var(--brand-blue);
+  border-color: var(--brand-blue);
+}
+
+.btn-toggle-full:hover {
+  background-color: var(--brand-blue-soft);
+}
+
+.extra-fields-hidden {
+  display: none;
+}
+
+/* Alternativas sugeridas */
+.alternatives-box {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.alt-chip {
+  background-color: #ffffff;
+  border: 1px solid var(--border-color);
+  color: var(--brand-blue);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.alt-chip:hover {
+  background-color: var(--brand-blue-soft);
+  border-color: var(--brand-blue);
+}
+
+/* Sugerencias rápidas */
+.suggestions-bar {
+  padding: 10px 20px 6px;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.suggestions-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.chips-container {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.chip {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chip:hover {
+  background-color: var(--brand-soft);
+  color: var(--brand-soft-text);
+  border-color: #dfc3e6;
+}
+
+/* Barra de entrada */
+.chat-input-bar {
+  padding: 12px 20px 16px;
+  background-color: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+.chat-form {
+  display: flex;
+  gap: 10px;
+}
+
+.chat-form input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  background-color: var(--bg-subtle);
+  outline: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.chat-form input:focus {
+  border-color: var(--brand-blue);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(27, 117, 188, 0.14);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 10px;
+  background-color: var(--brand-primary);
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--brand-primary-hover);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsivo para celulares y tablets */
+@media (max-width: 640px) {
+  .app-header {
+    padding: 12px 14px;
+    flex-wrap: wrap;
+  }
+
+  .header-subtitle {
+    display: none;
+  }
+
+  .chat-messages {
+    padding: 14px 12px;
+  }
+
+  .message-row {
+    max-width: 96%;
+  }
+
+  .exam-grid {
+    grid-template-columns: 1fr;
+    padding: 12px 14px;
+  }
+
+  .exam-card-header,
+  .exam-card-actions {
+    padding: 12px 14px;
+  }
+
+  .suggestions-bar {
+    padding: 8px 12px 4px;
+  }
+
+  .chat-input-bar {
+    padding: 10px 12px 12px;
+  }
+
+  .btn-primary span {
+    display: none;
+  }
+
+  .btn-primary {
+    padding: 0 14px;
+  }
+}

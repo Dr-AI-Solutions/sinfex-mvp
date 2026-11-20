@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Actualización SINFEX (Sin IA) — Asistente de Laboratorio</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- pdf.js vía CDN para extraer texto de PDFs localmente en el navegador -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    .admin-shell {
+      max-width: 980px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      background: var(--bg-surface);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+    }
+    .admin-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      background: var(--bg-subtle);
+      flex: 1;
+    }
+    .admin-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+    .admin-card h2 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      color: var(--text-primary);
+    }
+    .admin-card p {
+      margin: 0 0 12px;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+    .step-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+    .dropzone {
+      border: 2px dashed #94a3b8;
+      border-radius: var(--radius-md);
+      padding: 28px 18px;
+      text-align: center;
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+    .dropzone.dragover {
+      border-color: var(--brand-primary);
+      background: #f0fdfa;
+      color: var(--brand-soft-text);
+    }
+    .preview-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .preview-item {
+      border: 1px solid var(--border-color);
+      border-left: 5px solid var(--brand-primary);
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #ffffff;
+    }
+    .preview-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .badge-op {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+    .badge-update {
+      background: #fef9c3;
+      color: #854d0e;
+    }
+    .badge-new {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .preview-meta {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 6px 14px;
+    }
+    .url-input-inline {
+      width: 100%;
+      margin-top: 8px;
+      padding: 7px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.82rem;
+    }
+    .log-line {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-shell">
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+        </div>
+        <div>
+          <h1>Actualizador de Protocolos SINFEX (100% Offline / Sin IA)</h1>
+          <p class="header-subtitle">Extrae campos determinísticamente en tu navegador y genera los archivos listos para el servidor</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="index.html" class="btn-ghost btn-link">Volver al Asistente</a>
+      </div>
+    </header>
+
+    <main class="admin-body">
+      <section class="admin-card">
+        <h2>1. Cargar base actual (<code>base_examenes.json</code>)</h2>
+        <p>Carga el archivo <code>base_examenes.json</code> actual para conservar todos los exámenes existentes y actualizar o agregar solo los nuevos PDFs.</p>
+        <div class="step-row">
+          <input id="input-json" type="file" accept=".json,application/json" />
+          <button id="btn-cargar-servidor" type="button" class="btn-ghost">Intentar cargar desde esta carpeta</button>
+          <span id="estado-json" class="status-badge status-loading">Sin base cargada (0 exámenes)</span>
+        </div>
+      </section>
+
+      <section class="admin-card">
+        <h2>2. Arrastrar o seleccionar PDFs de SINFEX</h2>
+        <p>Procesamiento local con <code>pdf.js</code> y expresiones regulares de la plantilla SINFEX. No envía archivos a ningún servidor externo.</p>
+        <div id="dropzone" class="dropzone" tabindex="0">
+          <strong>Arrastra aquí uno o varios archivos PDF de SINFEX</strong><br />
+          <span>o haz clic para seleccionarlos desde tu equipo</span>
+          <input id="input-pdfs" type="file" accept=".pdf,application/pdf" multiple hidden />
+        </div>
+        <div id="estado-pdfs" class="log-line"></div>
+        <div id="preview-list" class="preview-list"></div>
+      </section>
+
+      <section class="admin-card">
+        <h2>3. Aplicar cambios y descargar archivos para el servidor</h2>
+        <p>Al aplicar, los exámenes extraídos se insertan o actualizan según su <code>codigo_interno</code>. Luego descarga ambos archivos y reemplázalos en la carpeta <code>web/</code>.</p>
+        <div class="step-row">
+          <button id="btn-aplicar" type="button" class="btn-primary" style="height: 40px;" disabled>Aplicar a la base</button>
+          <button id="btn-descargar-json" type="button" class="btn-action btn-copy" disabled>Descargar base_examenes.json</button>
+          <button id="btn-descargar-js" type="button" class="btn-action btn-pdf" disabled>Descargar datos_examenes.js</button>
+        </div>
+        <div id="estado-final" class="log-line"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+
+    const SECCIONES_SINFEX = [
+      ["codigo_interno", "C[oó]digo\\s+del\\s+Examen"],
+      ["nombres_examen", "Nombres?\\s+del\\s+Examen"],
+      ["laboratorios", "Laboratorios?\\s+de\\s+Procesamiento"],
+      ["preparacion_paciente", "Preparaci[oó]n\\s+del\\s+Paciente"],
+      ["muestra_requerida", "Muestra\\s+Requerida"],
+      ["estabilidad_muestra", "Estabilidad\\s+de\\s+la\\s+Muestra"],
+      ["condiciones_envio", "Condiciones\\s+de\\s+Env[ií]o\\s+al\\s+Laboratorio"],
+      ["metodo_utilizado", "M[eé]todo\\s+Utilizado"],
+      ["valores_referencia", "(?:Intervalos?|Valores?)\\s+de\\s+Referencia"],
+      ["valor_critico", "Valor(?:es)?\\s+(?:Cr[ií]ticos?|de\\s+Alerta)"],
+      ["parametros_desempeno", "Par[aá]metros\\s+de\\s+Desempe[ñn]o"],
+      ["informacion_clinica", "Informaci[oó]n\\s+Cl[ií]nica"],
+      ["referencias", "Referencias"],
+    ];
+
+    const PATRON_SECCIONES = new RegExp(
+      "(?:^|\\n)\\s*(?:" +
+        SECCIONES_SINFEX.map(([clave, patron]) => `(?<${clave}>${patron})`).join("|") +
+        ")(?:\\s*[\\d,\\s\\-–]*)?\\s*(?::|(?=\\n\\s*\\d))",
+      "gi"
+    );
+
+    let baseExamenes = [];
+    let extraidosPendientes = [];
+
+    const dom = {
+      inputJson: document.getElementById("input-json"),
+      btnCargarServidor: document.getElementById("btn-cargar-servidor"),
+      estadoJson: document.getElementById("estado-json"),
+      dropzone: document.getElementById("dropzone"),
+      inputPdfs: document.getElementById("input-pdfs"),
+      estadoPdfs: document.getElementById("estado-pdfs"),
+      previewList: document.getElementById("preview-list"),
+      btnAplicar: document.getElementById("btn-aplicar"),
+      btnDescargarJson: document.getElementById("btn-descargar-json"),
+      btnDescargarJs: document.getElementById("btn-descargar-js"),
+      estadoFinal: document.getElementById("estado-final"),
+    };
+
+    function actualizarEstadoBase() {
+      dom.estadoJson.textContent = `${baseExamenes.length} exámenes en memoria`;
+      dom.estadoJson.className = "status-badge status-ready";
+      dom.btnDescargarJson.disabled = baseExamenes.length === 0;
+      dom.btnDescargarJs.disabled = baseExamenes.length === 0;
+    }
+
+    function limpiarEncabezadosPagina(texto) {
+      return texto
+        .split(/\r?\n/)
+        .filter((linea) => {
+          const s = linea.trim();
+          if (!s) return true;
+          if (/^Sistema\s+de\s+Informaci[oó]n\s+de\s+Ex[aá]menes,\s*SINFEX$/i.test(s)) return false;
+          if (/^\d+\s+.+?\s+\d+\s+de\s+\d+$/i.test(s)) return false;
+          return true;
+        })
+        .join("\n");
+    }
+
+    function normalizarEspacios(texto) {
+      const lineas = texto.split(/\r?\n/).map((l) => l.replace(/[ \t]+/g, " ").trim());
+      const res = [];
+      let vacias = 0;
+      for (const l of lineas) {
+        if (!l) {
+          vacias += 1;
+          if (vacias <= 1 && res.length > 0) res.push("");
+        } else {
+          vacias = 0;
+          res.push(l);
+        }
+      }
+      return res.join("\n").trim();
+    }
+
+    function truncarNombre(nombre, maxLen = 110) {
+      const limpio = (nombre || "").replace(/\s+/g, " ").trim();
+      if (limpio.length <= maxLen) return limpio;
+      const corte = limpio.slice(0, maxLen - 3).lastIndexOf(" ");
+      if (corte > 40) return limpio.slice(0, corte).trim() + "...";
+      return limpio.slice(0, maxLen - 3).trim() + "...";
+    }
+
+    function esInstructivoPaciente(texto) {
+      if (/Estimad[oa]\s+paciente\s*:/i.test(texto)) return true;
+      if (/^\s*(?:\([A-Z]{2}-\d+\)\s*)?(?:\d+(?:\s+de\s+\d+)?\s+)?Revisado\s+(?:por\b|[A-Z]{2,})/i.test(texto)) return true;
+      return false;
+    }
+
+    function extraerDatosInstructivo(textoCompleto, fallbackCodigo) {
+      const plano = textoCompleto.replace(/\s+/g, " ").trim();
+      let actualizado = "";
+      const mAct = textoCompleto.match(/[ÚU]ltima\s+actualizaci[oó]n\s*:\s*([^/\n]+)/i);
+      if (mAct) actualizado = `Actualizado en ${mAct[1].trim()}`;
+
+      let codigo = fallbackCodigo;
+      const mCod = textoCompleto.match(/\b((?:IP|IL)-\d+)\b/i);
+      if (mCod) codigo = mCod[1].toUpperCase();
+
+      const sinCabecera = plano
+        .replace(/^(?:\([A-Z]{2}-\d+\)\s*)?(?:\d+(?:\s+de\s+\d+)?\s+)?Revisado\b.*?(?:Revisi[oó]n\s+\d+|Aprobado\s+por[^\n]*?)\s*/i, "")
+        .trim();
+
+      let nombre = "";
+      const mAp = sinCabecera.match(/^(.*?)\(\s*Aplicable\s+para\b/i);
+      if (mAp) {
+        nombre = mAp[1].replace(/^[ \-:]+|[ \-:]+$/g, "");
+      } else {
+        const mMayus = sinCabecera.match(/^([A-ZÁÉÍÓÚÑ0-9\s,&/\-\.]{6,110}?)(?=\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]|\s+Estimad[oa]\b|$)/);
+        nombre = mMayus ? mMayus[1].replace(/^[ \-:]+|[ \-:]+$/g, "") : sinCabecera.slice(0, 110);
+      }
+
+      const mEst = textoCompleto.match(/Estimad[oa]\s+paciente\s*:[\s\S]*/i);
+      const cuerpo = mEst ? normalizarEspacios(mEst[0]) : normalizarEspacios(sinCabecera.slice(nombre.length).trim());
+      return {
+        titulo: truncarNombre(nombre),
+        actualizado,
+        codigo,
+        cuerpo,
+      };
+    }
+
+    function extraerTituloYActualizacion(pagina1Raw) {
+      let actualizado = "";
+      const mAct = pagina1Raw.match(/((?:Actualizado|Elaborado)\s+en\s+[^\n]+?)(?:\s+por\b|\n|$)/i);
+      if (mAct) {
+        actualizado = mAct[1].replace(/\s+/g, " ").replace(/\.$/, "").trim();
+      }
+
+      const limpio = limpiarEncabezadosPagina(pagina1Raw);
+      let corte = limpio.length;
+      for (const re of [/Actualizado\s+en\b/i, /Elaborado\s+en\b/i, /Revisado\s+y\s+Aprobado\b/i, /C[oó]digo\s+del\s+Examen\b/i]) {
+        const m = limpio.match(re);
+        if (m && m.index < corte) corte = m.index;
+      }
+
+      const bloque = limpio.slice(0, corte).trim().replace(/^\d+\s+de\s+\d+\s+/, "");
+      const titulo = bloque
+        .split(/\r?\n/)
+        .map((l) => l.replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+        .join(" ");
+
+      return { titulo: truncarNombre(titulo), actualizado };
+    }
+
+    function extraerSecciones(textoLimpio) {
+      PATRON_SECCIONES.lastIndex = 0;
+      const matches = [];
+      let m;
+      while ((m = PATRON_SECCIONES.exec(textoLimpio)) !== null) {
+        const clave = Object.keys(m.groups || {}).find((k) => m.groups[k] !== undefined);
+        if (clave) {
+          matches.push({ clave, start: m.index, end: m.index + m[0].length });
+        }
+      }
+      const secciones = {};
+      for (let i = 0; i < matches.length; i++) {
+        const inicio = matches[i].end;
+        const fin = i + 1 < matches.length ? matches[i + 1].start : textoLimpio.length;
+        const contenido = normalizarEspacios(textoLimpio.slice(inicio, fin));
+        const clave = matches[i].clave;
+        if (!secciones[clave] || contenido.length > secciones[clave].length) {
+          secciones[clave] = contenido;
+        }
+      }
+      return secciones;
+    }
+
+    function extraerSinonimos(titulo, nombresExamen) {
+      const fuente = `${titulo} | ${nombresExamen}`;
+      const vistos = new Set();
+      const sinonimos = [];
+      const agregar = (cand) => {
+        const c = cand.replace(/\s+/g, " ").replace(/^[ .,;:]+|[ .,;:]+$/g, "");
+        if (!c || c.length < 2 || c.length > 40) return;
+        const k = c.toLowerCase();
+        if (!vistos.has(k)) {
+          vistos.add(k);
+          sinonimos.push(c);
+        }
+      };
+
+      for (const m of fuente.matchAll(/\(([^()]{2,40})\)/g)) {
+        agregar(m[1]);
+      }
+      for (const parte of nombresExamen.split(/[,;/]/)) {
+        const p = parte.trim();
+        if (p && p.length <= 18 && /[A-ZÁÉÍÓÚ]{2,}/.test(p)) {
+          agregar(p);
+        }
+      }
+      return sinonimos;
+    }
+
+    function detectarColorTapa(muestraRequerida) {
+      const t = (muestraRequerida || "").toLowerCase();
+      if (t.includes("tapa roja") || t.includes("tapa rojo")) return "rojo";
+      if (t.includes("tapa lila") || t.includes("edta")) return "lila";
+      if (t.includes("tapa celeste") || t.includes("citrato")) return "celeste";
+      if (t.includes("tapa amarilla") || t.includes("tapa amarillo") || t.includes("con gel") || t.includes("gel separador")) return "amarillo";
+      if (t.includes("tapa verde") || t.includes("heparina")) return "verde";
+      if (t.includes("tapa gris") || t.includes("fluoruro")) return "gris";
+      if (t.includes("orina")) return "orina";
+      return "otro";
+    }
+
+    function separarAreaYTiempo(laboratoriosRaw) {
+      if (!laboratoriosRaw) return { area: "Laboratorio Clínico", tiempo: "No especificado" };
+      const sinCabecera = laboratoriosRaw
+        .replace(/Laboratorio\s+D[ií]as\s+de\s+Procesamiento\s+Plazo\s+de\s+Entrega\s+de\s+Resultados/i, "")
+        .trim();
+      const lineas = sinCabecera.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      if (lineas.length === 0) return { area: "Laboratorio Clínico", tiempo: "No especificado" };
+
+      const patronTiempo = /\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|diario|seg[uú]n\s+demanda|hasta\s+\d+|d[ií]as?\s+h[aá]biles|horas?|minutos?)\b/i;
+      const areaLineas = [];
+      const tiempoLineas = [];
+      let encontro = false;
+      for (const l of lineas) {
+        if (!encontro && patronTiempo.test(l)) encontro = true;
+        if (encontro) tiempoLineas.push(l);
+        else areaLineas.push(l);
+      }
+      return {
+        area: areaLineas.length ? areaLineas.join(" ") : lineas[0],
+        tiempo: tiempoLineas.length ? tiempoLineas.join("\n") : sinCabecera,
+      };
+    }
+
+    function resumirClinica(texto, maxChars = 900) {
+      if (!texto) return "No especificada en el protocolo.";
+      if (texto.length <= maxChars) return texto;
+      const corte = texto.slice(0, maxChars).lastIndexOf(".");
+      if (corte > 200) return texto.slice(0, corte + 1).trim();
+      return texto.slice(0, maxChars).trim() + "...";
+    }
+
+    function limpiarTabla(rawTable) {
+      if (!Array.isArray(rawTable) || rawTable.length === 0) return [];
+      const maxCols = Math.max(...rawTable.map((r) => (Array.isArray(r) ? r.length : 0)), 0);
+      if (maxCols === 0) return [];
+
+      let filasLimpias = [];
+      for (const row of rawTable) {
+        const limpia = (row || []).map((c) => String(c || "").replace(/\n/g, " ").replace(/\s+/g, " ").trim());
+        while (limpia.length < maxCols) limpia.push("");
+        if (limpia.some((c) => c !== "")) filasLimpias.push(limpia);
+      }
+      if (filasLimpias.length === 0) return [];
+
+      // 0. Detectar fila 0 de título combinado (solo 1 celda con texto y filas siguientes >= 3 columnas con datos)
+      let tituloTabla = "";
+      if (filasLimpias.length >= 3) {
+        const noVaciosR0 = filasLimpias[0].filter((c) => c !== "");
+        const maxDatosSig = Math.max(...filasLimpias.slice(1).map((r) => r.filter((c) => c !== "").length), 0);
+        if (noVaciosR0.length === 1 && maxDatosSig >= 3) {
+          tituloTabla = noVaciosR0[0];
+          filasLimpias = filasLimpias.slice(1);
+        }
+      }
+
+      // 1. Eliminar columnas completamente vacías
+      const colsActivas = [];
+      for (let c = 0; c < maxCols; c++) {
+        if (filasLimpias.some((r) => r[c] !== "")) colsActivas.push(c);
+      }
+      if (colsActivas.length === 0) return [];
+
+      let tabla = filasLimpias.map((r) => colsActivas.map((c) => r[c]));
+
+      // 2. Compactación incondicional fila por fila
+      if (tabla.length >= 2) {
+        const encabezados = tabla[0].filter((c) => c !== "");
+        const nCols = encabezados.length;
+        if (nCols >= 2) {
+          const noVaciosR1 = tabla[1].filter((c) => c !== "");
+          let filaUnidadesAlineada = false;
+          if (noVaciosR1.length === nCols - 1 && noVaciosR1[0].startsWith("(")) {
+            tabla[1] = ["", ...noVaciosR1];
+            filaUnidadesAlineada = true;
+          }
+
+          const nuevaTabla = tabla.map((r, idx) => {
+            if (idx === 1 && filaUnidadesAlineada) return r;
+            const noVacios = r.filter((c) => c !== "");
+            if (noVacios.length === nCols) return noVacios;
+            if (r.length > nCols && noVacios.length < nCols) {
+              return [...noVacios, ...Array(nCols - noVacios.length).fill("")];
+            }
+            return [...r];
+          });
+
+          const maxLen = Math.max(nCols, ...nuevaTabla.map((r) => r.length));
+          for (const r of nuevaTabla) {
+            while (r.length < maxLen) r.push("");
+          }
+          const colsFinales = [];
+          for (let c = 0; c < maxLen; c++) {
+            if (nuevaTabla.some((r) => r[c] !== "")) colsFinales.push(c);
+          }
+          if (colsFinales.length > 0) {
+            tabla = nuevaTabla.map((r) => colsFinales.map((c) => r[c]));
+          }
+        }
+      }
+      return tituloTabla ? { titulo_tabla: tituloTabla, filas: tabla } : tabla;
+    }
+
+    async function extraerTextoPdfJs(file) {
+      const buffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+      const paginas = [];
+      for (let num = 1; num <= pdf.numPages; num++) {
+        const page = await pdf.getPage(num);
+        const content = await page.getTextContent();
+        let lastY = null;
+        let textoPagina = "";
+        for (const item of content.items) {
+          const y = item.transform ? item.transform[5] : null;
+          if (lastY !== null && y !== null && Math.abs(y - lastY) > 4) {
+            textoPagina += "\n";
+          } else if (textoPagina && !textoPagina.endsWith(" ") && !textoPagina.endsWith("\n")) {
+            textoPagina += " ";
+          }
+          textoPagina += item.str;
+          lastY = y;
+        }
+        paginas.push(textoPagina);
+      }
+      return paginas;
+    }
+
+    function parsearSinfexDesdePaginas(paginasRaw, nombreArchivo) {
+      const textoCompleto = paginasRaw.join("\n");
+      const limpio = limpiarEncabezadosPagina(textoCompleto);
+      const sec = extraerSecciones(limpio);
+
+      const codigoRaw = (sec.codigo_interno || "").trim();
+      const mCod = codigoRaw.match(/([A-Za-z0-9\-]+)/);
+      let codigoInterno = mCod ? mCod[1] : codigoRaw || nombreArchivo.replace(/\.pdf$/i, "");
+
+      let titulo = "";
+      let actualizado = "";
+      let preparacionInstructivo = "";
+      if (esInstructivoPaciente(limpio)) {
+        const inst = extraerDatosInstructivo(limpio, codigoInterno);
+        titulo = inst.titulo;
+        actualizado = inst.actualizado;
+        preparacionInstructivo = inst.cuerpo;
+        if (!codigoRaw) codigoInterno = inst.codigo;
+      } else {
+        const resTit = extraerTituloYActualizacion(paginasRaw[0] || "");
+        titulo = resTit.titulo;
+        actualizado = resTit.actualizado;
+      }
+
+      const nombresExamen = sec.nombres_examen || "";
+      const nombre = truncarNombre(titulo || (nombresExamen.split("\n")[0] || nombreArchivo));
+      const sinonimos = extraerSinonimos(nombre, nombresExamen);
+      const { area, tiempo } = separarAreaYTiempo(sec.laboratorios || "");
+      const muestra = sec.muestra_requerida || "No especificada en el protocolo.";
+      const colorTapa = detectarColorTapa(muestra);
+
+      const cortarValores = (txt) =>
+        (txt || "").split(/(?:^|\n)\s*(?:Par[aá]metros\s+de\s+Desempe[ñn]o|Informaci[oó]n\s+Cl[ií]nica|Referencias\s*:)/i)[0].trim();
+      const cortarEstab = (txt) =>
+        (txt || "").split(/(?:^|\n)\s*(?:M[eé]todo\s+Utilizado|(?:Intervalos?|Valores?)\s+de\s+Referencia)/i)[0].trim();
+
+      const partesEstab = [];
+      const estLimpia = cortarEstab(sec.estabilidad_muestra);
+      const envLimpia = cortarEstab(sec.condiciones_envio);
+      if (estLimpia) partesEstab.push(`Estabilidad:\n${estLimpia}`);
+      if (envLimpia) partesEstab.push(`Envío al laboratorio:\n${envLimpia}`);
+      const estabilidadEnvio = partesEstab.length ? partesEstab.join("\n\n") : "No especificado en el protocolo.";
+
+      const partesRef = [];
+      const refLimpia = cortarValores(sec.valores_referencia);
+      const critLimpia = cortarValores(sec.valor_critico);
+      if (refLimpia) partesRef.push(refLimpia);
+      if (critLimpia) partesRef.push(`Valor Crítico: ${critLimpia}`);
+      const valoresRef = partesRef.length ? partesRef.join("\n\n") : "No especificado en el protocolo.";
+
+      // Conservar url_pdf previa si ya existía el código en la base
+      const existente = baseExamenes.find(
+        (e) => String(e.codigo_interno).trim().toLowerCase() === String(codigoInterno).trim().toLowerCase()
+      );
+
+      return {
+        codigo_interno: codigoInterno,
+        nombre,
+        nombres_examen: nombresExamen,
+        sinonimos,
+        area,
+        tiempo_respuesta: tiempo,
+        preparacion_paciente: sec.preparacion_paciente || preparacionInstructivo || "No especificada en el protocolo.",
+        muestra_requerida: muestra,
+        color_tapa: colorTapa,
+        estabilidad_envio: estabilidadEnvio,
+        valores_referencia: valoresRef,
+        informacion_clinica: resumirClinica(sec.informacion_clinica || ""),
+        actualizado_en: actualizado,
+        url_pdf: existente ? existente.url_pdf || "" : "",
+      };
+    }
+
+    function renderizarPreview() {
+      dom.previewList.innerHTML = "";
+      extraidosPendientes.forEach((item, idx) => {
+        const existe = baseExamenes.some(
+          (e) => String(e.codigo_interno).trim().toLowerCase() === String(item.codigo_interno).trim().toLowerCase()
+        );
+        const card = document.createElement("div");
+        card.className = "preview-item";
+
+        const header = document.createElement("div");
+        header.className = "preview-header";
+
+        const title = document.createElement("strong");
+        title.textContent = `[${item.codigo_interno}] ${item.nombre}`;
+
+        const badge = document.createElement("span");
+        badge.className = `badge-op ${existe ? "badge-update" : "badge-new"}`;
+        badge.textContent = existe ? "Actualizará examen existente" : "Nuevo examen";
+
+        header.appendChild(title);
+        header.appendChild(badge);
+        card.appendChild(header);
+
+        const meta = document.createElement("div");
+        meta.className = "preview-meta";
+        meta.innerHTML = "";
+
+        const fields = [
+          ["Área", item.area],
+          ["Color tapa", item.color_tapa],
+          ["Plazo", item.tiempo_respuesta],
+          ["Actualizado", item.actualizado_en || "No detectado"],
+        ];
+        fields.forEach(([k, v]) => {
+          const d = document.createElement("div");
+          const b = document.createElement("strong");
+          b.textContent = `${k}: `;
+          d.appendChild(b);
+          d.appendChild(document.createTextNode(v));
+          meta.appendChild(d);
+        });
+        card.appendChild(meta);
+
+        const urlInput = document.createElement("input");
+        urlInput.type = "url";
+        urlInput.className = "url-input-inline";
+        urlInput.placeholder = "URL oficial del PDF en SINFEX (opcional)";
+        urlInput.value = item.url_pdf || "";
+        urlInput.addEventListener("input", (e) => {
+          extraidosPendientes[idx].url_pdf = e.target.value.trim();
+        });
+        card.appendChild(urlInput);
+
+        dom.previewList.appendChild(card);
+      });
+
+      dom.btnAplicar.disabled = extraidosPendientes.length === 0;
+    }
+
+    async function manejarArchivosPdf(files) {
+      const pdfs = Array.from(files).filter((f) => f.name.toLowerCase().endsWith(".pdf"));
+      if (pdfs.length === 0) return;
+
+      dom.estadoPdfs.textContent = `Procesando ${pdfs.length} PDF(s) localmente...`;
+      for (const file of pdfs) {
+        try {
+          const paginas = await extraerTextoPdfJs(file);
+          const item = parsearSinfexDesdePaginas(paginas, file.name);
+          extraidosPendientes.push(item);
+        } catch (err) {
+          console.error(err);
+          alert(`No se pudo leer ${file.name}: ${err.message}`);
+        }
+      }
+      dom.estadoPdfs.textContent = `${extraidosPendientes.length} PDF(s) listos para aplicar.`;
+      renderizarPreview();
+    }
+
+    function descargarArchivo(nombre, contenido, mime) {
+      const blob = new Blob([contenido], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nombre;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    dom.inputJson.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        if (!Array.isArray(data)) throw new Error("El JSON debe ser un arreglo.");
+        baseExamenes = data;
+        actualizarEstadoBase();
+        renderizarPreview();
+      } catch (err) {
+        alert("Error al leer JSON: " + err.message);
+      }
+    });
+
+    dom.btnCargarServidor.addEventListener("click", async () => {
+      try {
+        const resp = await fetch("base_examenes.json?t=" + Date.now(), { cache: "no-store" });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        if (!Array.isArray(data)) throw new Error("JSON inválido");
+        baseExamenes = data;
+        actualizarEstadoBase();
+        renderizarPreview();
+      } catch (err) {
+        if (Array.isArray(window.EXAMENES_DATA)) {
+          baseExamenes = [...window.EXAMENES_DATA];
+          actualizarEstadoBase();
+          renderizarPreview();
+        } else {
+          alert("No se pudo cargar automáticamente. Selecciona el archivo `base_examenes.json` manualmente.");
+        }
+      }
+    });
+
+    dom.dropzone.addEventListener("click", () => dom.inputPdfs.click());
+    dom.dropzone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dom.dropzone.classList.add("dragover");
+    });
+    dom.dropzone.addEventListener("dragleave", () => dom.dropzone.classList.remove("dragover"));
+    dom.dropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dom.dropzone.classList.remove("dragover");
+      manejarArchivosPdf(e.dataTransfer.files);
+    });
+    dom.inputPdfs.addEventListener("change", (e) => manejarArchivosPdf(e.target.files));
+
+    dom.btnAplicar.addEventListener("click", () => {
+      let actualizados = 0;
+      let agregados = 0;
+      for (const nuevo of extraidosPendientes) {
+        const idx = baseExamenes.findIndex(
+          (e) => String(e.codigo_interno).trim().toLowerCase() === String(nuevo.codigo_interno).trim().toLowerCase()
+        );
+        if (idx >= 0) {
+          baseExamenes[idx] = nuevo;
+          actualizados++;
+        } else {
+          baseExamenes.push(nuevo);
+          agregados++;
+        }
+      }
+      baseExamenes.sort((a, b) => (a.nombre || "").localeCompare(b.nombre || "", "es"));
+      extraidosPendientes = [];
+      renderizarPreview();
+      actualizarEstadoBase();
+      dom.estadoFinal.textContent = `Base actualizada: ${actualizados} actualizado(s), ${agregados} agregado(s). Total: ${baseExamenes.length} exámenes. Descarga ambos archivos para subirlos al servidor.`;
+    });
+
+    dom.btnDescargarJson.addEventListener("click", () => {
+      descargarArchivo("base_examenes.json", JSON.stringify(baseExamenes, null, 2), "application/json;charset=utf-8");
+    });
+
+    dom.btnDescargarJs.addEventListener("click", () => {
+      const contenido =
+        "// Archivo generado por web/admin.html (100% offline / sin IA)\n" +
+        "window.EXAMENES_DATA = " +
+        JSON.stringify(baseExamenes, null, 2) +
+        ";\n";
+      descargarArchivo("datos_examenes.js", contenido, "application/javascript;charset=utf-8");
+    });
+  </script>
+</body>
+</html>

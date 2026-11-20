@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UC CHRISTUS · Asistente de Laboratorio (SINFEX)</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Fuse.js vía CDN para búsqueda difusa instantánea en el navegador -->
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js" defer></script>
+  <!-- Fallback local para apertura directa con doble clic (protocolo file://) -->
+  <script src="datos_examenes.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 3h6" />
+            <path d="M10 3v6.5L5.2 17.6A2 2 0 0 0 6.9 20.5h10.2a2 2 0 0 0 1.7-2.9L14 9.5V3" />
+            <path d="M8.5 14h7" />
+          </svg>
+        </div>
+        <div>
+          <h1>UC CHRISTUS · Asistente de Laboratorio (SINFEX)</h1>
+          <p class="header-subtitle">Protocolos SINFEX: tubos, preparación, estabilidad, plazos y valores de referencia</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <span id="status-badge" class="status-badge status-loading" title="Estado de la base de protocolos">
+          Cargando protocolos...
+        </span>
+        <button id="btn-limpiar" class="btn-ghost" type="button" title="Limpiar conversación">
+          Nueva consulta
+        </button>
+        <a href="admin.html" class="btn-ghost btn-link" title="Panel de actualización de protocolos sin IA">
+          Actualizar PDFs
+        </a>
+      </div>
+    </header>
+
+    <main id="chat-messages" class="chat-messages" aria-live="polite">
+      <!-- Los mensajes y tarjetas de respuesta se renderizan dinámicamente desde app.js -->
+    </main>
+
+    <section class="suggestions-bar" aria-label="Sugerencias rápidas">
+      <span class="suggestions-label">Consultas frecuentes:</span>
+      <div class="chips-container" id="quick-chips">
+        <button type="button" class="chip" data-query="¿En qué tubo va el Dímero D?">¿En qué tubo va el Dímero D?</button>
+        <button type="button" class="chip" data-query="Transporte y estabilidad Amonio">Transporte y estabilidad Amonio</button>
+        <button type="button" class="chip" data-query="Indicaciones para PTGO">Indicaciones para PTGO</button>
+        <button type="button" class="chip" data-query="¿En qué tubo va el Hemograma?">¿En qué tubo va el Hemograma?</button>
+      </div>
+    </section>
+
+    <footer class="chat-input-bar">
+      <form id="chat-form" class="chat-form" autocomplete="off">
+        <label for="user-input" class="sr-only">Escribe el nombre, sigla o código SINFEX del examen</label>
+        <input
+          id="user-input"
+          type="text"
+          placeholder="Ej: ¿En qué tubo va el ELP?, indicaciones TRAb, código 337..."
+          required
+        />
+        <button id="btn-enviar" type="submit" class="btn-primary">
+          <span>Consultar</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </form>
+    </footer>
+  </div>
+</body>
+</html>
